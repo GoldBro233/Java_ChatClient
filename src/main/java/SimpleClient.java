@@ -17,9 +17,13 @@ public class SimpleClient {
 
         try (Socket socket = new Socket(host, port)) {
             OutputStream out = socket.getOutputStream();
-            out.write(message.getBytes(StandardCharsets.UTF_8));
+            out.write((formatMessage(message) + System.lineSeparator()).getBytes(StandardCharsets.UTF_8));
             out.flush();
             System.out.println("Sent to " + host + ":" + port + " -> " + message);
         }
+    }
+
+    public static String formatMessage(String content) {
+        return new Message("question", content).toJson();
     }
 }

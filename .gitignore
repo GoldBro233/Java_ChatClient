@@ -1,5 +1,7 @@
 # Gradle
 .gradle/
+.gradle-home/
+.gradle-project-cache/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 
@@ -18,3 +20,6 @@ Thumbs.db
 bin/
 docs/
 .claude
+
+# Runtime data
+data/

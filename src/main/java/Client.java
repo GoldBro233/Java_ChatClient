@@ -58,13 +58,21 @@ public class Client {
         try {
             String line;
             while ((line = in.readLine()) != null) {
-                Message message = Message.fromJson(line);
+                Message message = parseServerMessage(line);
                 System.out.println("\n[Answer] " + message.content());
                 System.out.print("> ");
             }
             System.out.println("\nServer closed connection.");
         } catch (IOException e) {
             System.out.println("\nConnection lost: " + e.getMessage());
+        }
+    }
+
+    public static Message parseServerMessage(String line) throws IOException {
+        try {
+            return Message.fromJson(line);
+        } catch (IllegalArgumentException e) {
+            throw new IOException("Invalid message from server", e);
         }
     }
 

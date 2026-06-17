@@ -3,25 +3,32 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.UUID;
 
 public class ClientSession {
 
-    private final int id;
+    private final UUID id;
+    private final String alias;
     private final Socket socket;
     private final BufferedReader in;
     private final PrintWriter out;
     private volatile boolean connected;
 
-    public ClientSession(int id, Socket socket) throws IOException {
+    public ClientSession(UUID id, String alias, Socket socket) throws IOException {
         this.id = id;
+        this.alias = alias;
         this.socket = socket;
         this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         this.out = new PrintWriter(socket.getOutputStream(), true);
         this.connected = true;
     }
 
-    public int getId() {
+    public UUID getId() {
         return id;
+    }
+
+    public String getAlias() {
+        return alias;
     }
 
     public boolean isConnected() {
@@ -34,7 +41,12 @@ public class ClientSession {
             connected = false;
             return null;
         }
-        return Message.fromJson(line);
+        try {
+            return Message.fromJson(line);
+        } catch (IllegalArgumentException e) {
+            connected = false;
+            throw new IOException("Invalid message from client", e);
+        }
     }
 
     public void sendMessage(Message message) {

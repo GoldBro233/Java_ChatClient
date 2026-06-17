@@ -1,0 +1,9 @@
+[
+  {
+    "name": "Message",
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "queryAllDeclaredMethods": true
+  }
+]

@@ -13,3 +13,8 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Build Directory
+bin/
+docs/
+.claude

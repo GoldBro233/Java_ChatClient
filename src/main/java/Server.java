@@ -13,24 +13,30 @@ public class Server {
     private final AtomicInteger nextClientId = new AtomicInteger(1);
     private volatile boolean running = true;
     private int selectedClientId = -1;
+    private ServerSocket serverSocket;
 
     public Server(int port) {
         this.port = port;
     }
 
     public void start() throws IOException {
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Server started on port " + port);
+        serverSocket = new ServerSocket(port);
+        System.out.println("Server started on port " + port);
 
-            Thread.startVirtualThread(this::replLoop);
+        Thread.startVirtualThread(this::replLoop);
 
-            while (running) {
+        while (running) {
+            try {
                 Socket socket = serverSocket.accept();
                 int clientId = nextClientId.getAndIncrement();
                 ClientSession session = new ClientSession(clientId, socket);
                 sessions.put(clientId, session);
                 System.out.println("Client-" + clientId + " connected");
                 Thread.startVirtualThread(() -> receiveLoop(session));
+            } catch (java.net.SocketException e) {
+                if (running) {
+                    System.err.println("Accept error: " + e.getMessage());
+                }
             }
         }
 
@@ -124,6 +130,10 @@ public class Server {
 
     public void stop() {
         running = false;
+        try {
+            serverSocket.close();
+        } catch (IOException ignored) {
+        }
     }
 
     public static void main(String[] args) throws IOException {

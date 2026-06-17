@@ -41,6 +41,7 @@ public class Client {
                     continue;
                 }
                 if (line.equals("/quit")) {
+                    System.out.println("Disconnected.");
                     break;
                 }
                 Message message = new Message("question", line);

@@ -25,3 +25,10 @@ tasks.register<JavaExec>("runClient") {
     classpath = sourceSets["main"].runtimeClasspath
     mainClass.set("Client")
 }
+
+tasks.register<Jar>("fatJar") {
+    archiveClassifier.set("")
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    with(tasks.jar.get() as CopySpec)
+}

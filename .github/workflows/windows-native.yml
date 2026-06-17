@@ -1,0 +1,66 @@
+name: Windows Native Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows-native:
+    name: Build Windows native binaries
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: graalvm
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache project-local Gradle state
+        uses: actions/cache@v4
+        with:
+          path: |
+            .gradle-home/caches
+            .gradle-home/wrapper
+            .gradle-project-cache
+          key: windows-native-gradle-${{ hashFiles('**/*.gradle*', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            windows-native-gradle-
+
+      - name: Verify native-image
+        shell: pwsh
+        run: native-image.cmd --version
+
+      - name: Build native binaries
+        shell: pwsh
+        run: |
+          $projectRoot = (Get-Location).Path
+          $javaTmp = Join-Path $projectRoot 'build\tmp\java'
+
+          New-Item -ItemType Directory -Force `
+            .gradle-home, `
+            .gradle-project-cache, `
+            $javaTmp, `
+            (Join-Path $projectRoot 'build\tmp\gradle'), `
+            (Join-Path $projectRoot 'build\native\tmp') | Out-Null
+
+          $env:GRADLE_USER_HOME = Join-Path $projectRoot '.gradle-home'
+          $env:JAVA_OPTS = "-Djava.io.tmpdir=$javaTmp -XX:-UsePerfData"
+
+          ./gradlew.bat --no-daemon --project-cache-dir .gradle-project-cache nativeCompile
+
+      - name: Upload Windows native binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: java-chat-windows-native
+          path: |
+            build/native/java-chat-server.exe
+            build/native/java-chat-client.exe
+            build/native/java-chat-send.exe
+          if-no-files-found: error

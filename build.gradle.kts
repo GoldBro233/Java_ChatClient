@@ -45,16 +45,23 @@ tasks.register("fatJar") {
 }
 
 val graalVmHome = providers.gradleProperty("graalVmHome")
-    .orElse("/usr/lib/jvm/java-25-graalvm")
+    .orElse(providers.environmentVariable("JAVA_HOME"))
+
+val isWindows = System.getProperty("os.name").lowercase().contains("windows")
 
 fun registerNativeImageTask(taskName: String, mainClassName: String, outputName: String) {
     tasks.register<Exec>(taskName) {
+        val binaryName = "$outputName.exe"
+
         group = "build"
-        description = "Builds the $outputName native binary with GraalVM native-image."
+        description = "Builds the Windows $binaryName native binary with GraalVM native-image."
         dependsOn(tasks.classes)
+        onlyIf("Windows native binaries are built on Windows runners") {
+            isWindows
+        }
 
         val nativeBuildDir = layout.buildDirectory.dir("native").get().asFile
-        val binaryFile = nativeBuildDir.resolve(outputName)
+        val binaryFile = nativeBuildDir.resolve(binaryName)
         val tempDir = nativeBuildDir.resolve("tmp/$outputName")
 
         inputs.files(sourceSets["main"].runtimeClasspath)
@@ -63,13 +70,13 @@ fun registerNativeImageTask(taskName: String, mainClassName: String, outputName:
         doFirst {
             nativeBuildDir.mkdirs()
             tempDir.mkdirs()
+            executable = graalVmHome.map { "$it/bin/native-image.cmd" }.get()
         }
 
         environment("TMPDIR", tempDir.absolutePath)
         environment("TMP", tempDir.absolutePath)
         environment("TEMP", tempDir.absolutePath)
 
-        executable = graalVmHome.map { "$it/bin/native-image" }.get()
         args(
             "-cp", sourceSets["main"].runtimeClasspath.asPath,
             "--no-fallback",

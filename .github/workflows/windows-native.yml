@@ -55,6 +55,27 @@ jobs:
 
           ./gradlew.bat --no-daemon --project-cache-dir .gradle-project-cache nativeCompile
 
+      - name: Verify native binary outputs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $nativeDir = Join-Path (Get-Location).Path 'build\native'
+          $expected = @(
+            'java-chat-server.exe',
+            'java-chat-client.exe',
+            'java-chat-send.exe'
+          )
+
+          Write-Host "Native output directory: $nativeDir"
+          Get-ChildItem -Path $nativeDir -Force | Format-Table Name, Length, LastWriteTime
+
+          foreach ($fileName in $expected) {
+            $filePath = Join-Path $nativeDir $fileName
+            if (-not (Test-Path -LiteralPath $filePath -PathType Leaf)) {
+              throw "Missing native binary: $filePath"
+            }
+          }
+
       - name: Upload Windows native binaries
         uses: actions/upload-artifact@v4
         with:

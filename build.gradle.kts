@@ -61,6 +61,7 @@ fun registerNativeImageTask(taskName: String, mainClassName: String, outputName:
         }
 
         val nativeBuildDir = layout.buildDirectory.dir("native").get().asFile
+        val outputBaseFile = nativeBuildDir.resolve(outputName)
         val binaryFile = nativeBuildDir.resolve(binaryName)
         val tempDir = nativeBuildDir.resolve("tmp/$outputName")
 
@@ -84,7 +85,7 @@ fun registerNativeImageTask(taskName: String, mainClassName: String, outputName:
             "-J-XX:-UsePerfData",
             "-H:TempDirectory=${tempDir.absolutePath}",
             "-H:Class=$mainClassName",
-            "-o", binaryFile.absolutePath
+            "-o", outputBaseFile.absolutePath
         )
     }
 }
